@@ -48,6 +48,10 @@ Phase 1 build notes, decisions and fixes: [docs/phase-1-foundation.md](docs/phas
 ## Lab Check: connectivity dashboard
 `scripts/labcheck.py` checks every node in parallel: **ping**, **SSH** (tcp/22) and the **Kubernetes API** (tcp/6443 on the control plane). Standard library only.
 
+![Lab Check showing all 4 nodes reachable over ping and SSH; the k3s API is down because k3s is not installed yet](docs/images/labcheck-4of4.png)
+
+*End of Phase 1 networking: all 4 nodes up. K3S shows DOWN because k3s isn't installed yet.*
+
 ```bash
 python scripts/labcheck.py              # check once
 python scripts/labcheck.py --watch 5    # live dashboard, refresh every 5 s
