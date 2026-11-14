@@ -1,0 +1,14 @@
+# Add to ~/.ssh/config on the admin machine, then: ssh k8s-cp
+# Uses a dedicated lab key (ssh-keygen -t ed25519 -f ~/.ssh/k8s-lab), separate from any GitHub key.
+Host k8s-cp
+    HostName 192.168.100.10
+Host k8s-w1
+    HostName 192.168.100.11
+Host k8s-w2
+    HostName 192.168.100.12
+Host obs
+    HostName 192.168.100.20
+Host k8s-cp k8s-w1 k8s-w2 obs
+    User dan
+    IdentityFile ~/.ssh/k8s-lab
+    IdentitiesOnly yes

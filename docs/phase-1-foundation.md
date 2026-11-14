@@ -7,7 +7,7 @@ Goal: four Ubuntu VMs on an isolated network, reachable by SSH, ready for Ansibl
 - [x] Template VM: Ubuntu Server 26.04.1 LTS, updated, root disk extended, snapshot
 - [x] 4 full clones, each with a unique hostname, machine-id, SSH host keys and static IP
 - [x] `labcheck.py` confirms 4/4 nodes reachable (ping + SSH)
-- [ ] SSH key login, password login disabled
+- [x] SSH key login, password login disabled
 - [ ] Ansible inventory
 - [ ] k3s installed, `kubectl get nodes` shows 3 nodes `Ready`
 
@@ -33,6 +33,22 @@ sudo dpkg-reconfigure openssh-server                     # new SSH host keys
 sudo sed -i '/match:/d;/macaddress:/d;/set-name:/d' /etc/netplan/00-installer-config.yaml
 # then create /etc/netplan/60-lab.yaml (see configs/netplan/), chmod 600, netplan apply
 ```
+
+## SSH: key-only access
+1. Dedicated ed25519 key for the lab (`~/.ssh/k8s-lab`, passphrase-protected, loaded with `ssh-agent`), kept separate from my GitHub key so one leak doesn't expose both.
+2. Public key copied to `~/.ssh/authorized_keys` on each node (permissions 700/600; SSH ignores keys in files others can read).
+3. Host aliases in `~/.ssh/config` so `ssh k8s-cp` just works: see [configs/ssh/client-config.example](../configs/ssh/client-config.example).
+4. Password and root login switched off with [configs/ssh/10-hardening.conf](../configs/ssh/10-hardening.conf), checked with `sshd -t` before reloading.
+
+**Evidence: each node has its own host key** (the regenerated keys from the per-clone setup):
+
+![Four different ED25519 fingerprints on first connection](images/ssh-unique-host-keys.png)
+
+**Evidence: password login is refused, key login works:**
+
+![Password attempt denied with "Permission denied (publickey)", key login prints the hostname](images/ssh-password-denied.png)
+
+Gotcha: Ubuntu's installer writes `/etc/ssh/sshd_config.d/50-cloud-init.conf` with `PasswordAuthentication yes`. sshd keeps the **first** value it reads, in alphabetical file order, so the hardening file is named `10-` to win. Putting `no` in a later file would leave passwords silently enabled.
 
 ## Problems and fixes
 | Problem | Cause | Fix |
