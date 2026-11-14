@@ -16,16 +16,16 @@ It covers the **workload layer** of cloud security: containers and Kubernetes. I
 ## Architecture
 ```
                  Windows host (VMware Workstation)
-                 192.168.100.1  â”€â”€ runs labcheck.py
-                        â”‚
-        â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•ªâ•â•â•â•â•â•â•â•â•â•â•â•â•â•â•â•  VMnet2: isolated host-only lab network
-        â”‚               â”‚               â”‚               â”‚      192.168.100.0/24, no DHCP
-   â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”     â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”
-   â”‚ k8s-cp  â”‚     â”‚ k8s-w1  â”‚     â”‚ k8s-w2  â”‚     â”‚   obs   â”‚
-   â”‚  .10    â”‚     â”‚  .11    â”‚     â”‚  .12    â”‚     â”‚  .20    â”‚
-   â”‚ control â”‚     â”‚ worker  â”‚     â”‚ worker  â”‚     â”‚ logging â”‚
-   â”‚  plane  â”‚     â”‚         â”‚     â”‚         â”‚     â”‚ & alertsâ”‚
-   â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜     â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+                 192.168.100.1  ── runs labcheck.py
+                        │
+        ════════════════╪════════════════  VMnet2: isolated host-only lab network
+        │               │               │               │      192.168.100.0/24, no DHCP
+   ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────┐
+   │ k8s-cp  │     │ k8s-w1  │     │ k8s-w2  │     │   obs   │
+   │  .10    │     │  .11    │     │  .12    │     │  .20    │
+   │ control │     │ worker  │     │ worker  │     │ logging │
+   │  plane  │     │         │     │         │     │ & alerts│
+   └─────────┘     └─────────┘     └─────────┘     └─────────┘
    2 vCPU/4 GB     2 vCPU/4 GB     2 vCPU/4 GB     4 vCPU/8 GB
 
    Each VM also has a NAT adapter (ens33) for package updates only.
@@ -35,13 +35,13 @@ It covers the **workload layer** of cloud security: containers and Kubernetes. I
 ## Roadmap
 | Phase | What | Status |
 |---|---|---|
-| 1. Foundation | VMs, isolated network, SSH keys, Ansible, k3s | ðŸŸ¡ in progress |
-| 2. Harden | kube-bench (CIS benchmark), RBAC, Pod Security Admission, default-deny NetworkPolicies | â¬œ planned |
-| 3. Policy as code | Kyverno: no privileged pods, no `latest` tags, non-root, signed images only | â¬œ planned |
-| 4. Secure pipeline | GitHub Actions: Trivy scans, Syft SBOM, cosign signing; Argo CD deploys | â¬œ planned |
-| 5. Runtime detection | Falco with custom rules mapped to MITRE ATT&CK, alerts shipped to `obs` | â¬œ planned |
-| 6. Attack and detect | Simulated attacks; table of attack â†’ detection â†’ gap | â¬œ planned |
-| 7. Cloud (optional) | Same manifests on AWS EKS for a few hours via Terraform, then destroyed | â¬œ planned |
+| 1. Foundation | VMs, isolated network, SSH keys, Ansible, k3s | ✅ done ([notes](docs/phase-1-foundation.md)) |
+| 2. Harden | kube-bench (CIS benchmark), RBAC, Pod Security Admission, default-deny NetworkPolicies | ⬜ planned |
+| 3. Policy as code | Kyverno: no privileged pods, no `latest` tags, non-root, signed images only | ⬜ planned |
+| 4. Secure pipeline | GitHub Actions: Trivy scans, Syft SBOM, cosign signing; Argo CD deploys | ⬜ planned |
+| 5. Runtime detection | Falco with custom rules mapped to MITRE ATT&CK, alerts shipped to `obs` | ⬜ planned |
+| 6. Attack and detect | Simulated attacks; table of attack → detection → gap | ⬜ planned |
+| 7. Cloud (optional) | Same manifests on AWS EKS for a few hours via Terraform, then destroyed | ⬜ planned |
 
 Phase 1 build notes, decisions and fixes: [docs/phase-1-foundation.md](docs/phase-1-foundation.md)
 
