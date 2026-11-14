@@ -1,0 +1,8 @@
+# /etc/netplan/60-lab.yaml on each node: static IP on the isolated lab network (VMnet2).
+# Change the address per node: k8s-cp .10, k8s-w1 .11, k8s-w2 .12, obs .20
+# Apply with: sudo chmod 600 /etc/netplan/60-lab.yaml && sudo netplan apply
+network:
+  version: 2
+  ethernets:
+    ens37:
+      addresses: [192.168.100.10/24]

@@ -1,0 +1,35 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+.pytest_cache/
+
+# Secrets: never commit these (this repo is public)
+.env
+*.pem
+*.key
+id_rsa*
+id_ed25519*
+*.kubeconfig
+kubeconfig*
+k3s.yaml
+node-token
+.vault_pass*
+*credentials*
+
+# Terraform (Phase 7)
+.terraform/
+*.tfstate
+*.tfstate.*
+*.tfvars
+
+# VM files, in case one gets copied in by mistake
+*.vmdk
+*.vmx
+*.vmsd
+*.nvram
+*.iso
+
+# Generated status output
+*status*.md
