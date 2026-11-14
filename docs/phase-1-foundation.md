@@ -9,7 +9,7 @@ Goal: four Ubuntu VMs on an isolated network, reachable by SSH, ready for Ansibl
 - [x] `labcheck.py` confirms 4/4 nodes reachable (ping + SSH)
 - [x] SSH key login, password login disabled
 - [x] Ansible inventory, run from `obs` as the management host ([evidence](images/ansible-ping.png))
-- [ ] k3s installed, `kubectl get nodes` shows 3 nodes `Ready`
+- [x] k3s installed, `kubectl get nodes` shows 3 nodes `Ready` (**Phase 1 complete, 2026-11-14**)
 
 ## Decisions
 | Decision | Why |
@@ -59,6 +59,23 @@ Gotcha: Ubuntu's installer writes `/etc/ssh/sshd_config.d/50-cloud-init.conf` wi
 
 ![ansible all -m ping: all four hosts reply pong](images/ansible-ping.png)
 
+## k3s: the cluster
+Installed by [ansible/k3s.yml](../ansible/k3s.yml): server on `k8s-cp`, agents on `k8s-w1` and `k8s-w2`, k3s **v1.37.2+k3s1** (pinned in [group_vars/all.yml](../ansible/group_vars/all.yml) so a rebuild gives the same cluster).
+
+| Choice | Why |
+|---|---|
+| `--node-ip` + `--flannel-iface ens37` | Each VM has two NICs. Without these, k3s would pick the NAT adapter and send cluster traffic over it. These keep it on the isolated lab network |
+| Installer downloaded to a file, not `curl \| sh` | The script can be inspected before it runs |
+| Join token read with `no_log: true`, held in memory only | The token lets any machine join the cluster, so it never appears in output or in the repo (`.gitignore` also blocks `node-token`) |
+| `--write-kubeconfig-mode 0600` | The cluster-admin credentials file is root-only |
+| `creates:` on install tasks | Idempotent: running the playbook again skips work already done |
+
+![PLAY RECAP: failed=0 on all three nodes](images/k3s-play-recap.png)
+
+![kubectl get nodes -o wide: 3 nodes Ready, internal IPs on 192.168.100.0/24](images/k3s-get-nodes.png)
+
+All three nodes are `Ready`, and the **INTERNAL-IP** column shows `192.168.100.x`, which proves cluster traffic uses the lab network and not NAT.
+
 ## Problems and fixes
 | Problem | Cause | Fix |
 |---|---|---|
@@ -67,3 +84,4 @@ Gotcha: Ubuntu's installer writes `/etc/ssh/sshd_config.d/50-cloud-init.conf` wi
 | `netplan apply`: "Invalid YAML: inconsistent indentation" | A half-run `sed` left an orphan `macaddress:` line | Delete the leftover line |
 | One worker unreachable from the host | Typo put it on `192.168.11.12` (wrong subnet) | Found with `ip -br a`; `arp -a` on the host showed the others had distinct MACs (no duplicate IPs); fixed the address |
 | NAT adapter briefly had no IPv4 after `netplan apply` | DHCP lease not yet renewed | Reboot (or wait) |
+| Ansible: "Timeout (12s) waiting for privilege escalation prompt" | Ubuntu 25.10+ ships **sudo-rs** as `sudo`; Ansible's become doesn't recognise its password prompt | `become_exe = sudo.ws` in [ansible.cfg](../ansible/ansible.cfg) (classic sudo, still installed); tested with `ansible k8s_cluster -b -K -a whoami` → `root` before re-running the playbook |

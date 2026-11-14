@@ -1,0 +1,4 @@
+# Variables shared by every host.
+# k3s version is pinned so a rebuild gives the same cluster. First install used the
+# stable channel (Nov 2026), which gave v1.37.2+k3s1; upgrade by changing this on purpose.
+k3s_version: v1.37.2+k3s1

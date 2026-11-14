@@ -20,7 +20,7 @@
         cmd: /usr/local/sbin/k3s-install.sh
         creates: /usr/local/bin/k3s  # skip if k3s is already installed
       environment:
-        INSTALL_K3S_CHANNEL: stable
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
         INSTALL_K3S_EXEC: >-
           server
           --node-ip {{ ansible_host }}
@@ -62,7 +62,7 @@
         cmd: /usr/local/sbin/k3s-install.sh
         creates: /usr/local/bin/k3s
       environment:
-        INSTALL_K3S_CHANNEL: stable
+        INSTALL_K3S_VERSION: "{{ k3s_version }}"
         K3S_URL: "https://{{ server_ip }}:6443"
         K3S_TOKEN: "{{ hostvars['k8s-cp'].k3s_token }}"
         INSTALL_K3S_EXEC: >-

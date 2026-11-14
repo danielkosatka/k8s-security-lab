@@ -1,8 +1,8 @@
-﻿# k8s-security-lab
+# k8s-security-lab
 
 A home lab for **cloud-native (Kubernetes) security**: build a small cluster, harden it, enforce policy as code, secure the build pipeline, detect attacks at runtime, then attack it on purpose and measure what gets caught.
 
-> **Status: Phase 1 (foundation) in progress.** The 4 VMs are built, networked and reachable by key-only SSH; Ansible and k3s are next. This README only claims what is done. Later phases are listed as the plan.
+> **Status: Phase 1 (foundation) complete.** A 3-node k3s cluster (v1.37.2) runs on an isolated network, built with Ansible from a management host, with key-only SSH. Phase 2 (hardening) is next. This README only claims what is done. Later phases are listed as the plan.
 
 ## Why this lab
 It covers the **workload layer** of cloud security: containers and Kubernetes. It complements my other projects:
@@ -64,6 +64,7 @@ On Windows, `scripts/make_shortcut.ps1` adds a desktop shortcut that opens the l
 ## Repo layout
 ```
 scripts/     labcheck.py, make_shortcut.ps1
+ansible/     inventory, config, k3s.yml playbook
 configs/     example config files (netplan, ssh)
 docs/        build notes per phase, screenshots in docs/images/
 assets/      icon for the desktop shortcut
