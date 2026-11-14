@@ -1,0 +1,72 @@
+# k3s.yml - installs a k3s cluster: one server (k8s-cp) and two agents (k8s-w1, k8s-w2).
+# Run from the ansible/ folder on obs:  ansible-playbook k3s.yml -K
+#   -K asks for the sudo password once (needed to install software on the nodes).
+# Safe to run again: steps that are already done are skipped ("creates:" checks).
+
+- name: Install the k3s server (control plane)
+  hosts: control_plane
+  become: true                       # run tasks with sudo
+  vars:
+    lab_iface: ens37                 # the isolated lab network, NOT the NAT adapter
+  tasks:
+    - name: Download the k3s install script to a file (so it can be inspected, not piped into sh)
+      ansible.builtin.get_url:
+        url: https://get.k3s.io
+        dest: /usr/local/sbin/k3s-install.sh
+        mode: "0700"
+
+    - name: Install k3s server, bound to the lab network
+      ansible.builtin.command:
+        cmd: /usr/local/sbin/k3s-install.sh
+        creates: /usr/local/bin/k3s  # skip if k3s is already installed
+      environment:
+        INSTALL_K3S_CHANNEL: stable
+        INSTALL_K3S_EXEC: >-
+          server
+          --node-ip {{ ansible_host }}
+          --flannel-iface {{ lab_iface }}
+          --tls-san {{ ansible_host }}
+          --write-kubeconfig-mode 0600
+
+    - name: Wait for the server to create its join token
+      ansible.builtin.wait_for:
+        path: /var/lib/rancher/k3s/server/node-token
+        timeout: 120
+
+    - name: Read the join token
+      ansible.builtin.slurp:
+        src: /var/lib/rancher/k3s/server/node-token
+      register: k3s_token_file
+      no_log: true                   # never print the token in the output
+
+    - name: Keep the token in memory for the workers (never written to the repo)
+      ansible.builtin.set_fact:
+        k3s_token: "{{ k3s_token_file.content | b64decode | trim }}"
+      no_log: true
+
+- name: Install k3s agents (workers) and join them to the server
+  hosts: workers
+  become: true
+  vars:
+    lab_iface: ens37
+    server_ip: "{{ hostvars['k8s-cp'].ansible_host }}"
+  tasks:
+    - name: Download the k3s install script
+      ansible.builtin.get_url:
+        url: https://get.k3s.io
+        dest: /usr/local/sbin/k3s-install.sh
+        mode: "0700"
+
+    - name: Install k3s agent and join the cluster
+      ansible.builtin.command:
+        cmd: /usr/local/sbin/k3s-install.sh
+        creates: /usr/local/bin/k3s
+      environment:
+        INSTALL_K3S_CHANNEL: stable
+        K3S_URL: "https://{{ server_ip }}:6443"
+        K3S_TOKEN: "{{ hostvars['k8s-cp'].k3s_token }}"
+        INSTALL_K3S_EXEC: >-
+          agent
+          --node-ip {{ ansible_host }}
+          --flannel-iface {{ lab_iface }}
+      no_log: true                   # the environment contains the join token

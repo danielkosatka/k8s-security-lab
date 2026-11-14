@@ -8,7 +8,7 @@ Goal: four Ubuntu VMs on an isolated network, reachable by SSH, ready for Ansibl
 - [x] 4 full clones, each with a unique hostname, machine-id, SSH host keys and static IP
 - [x] `labcheck.py` confirms 4/4 nodes reachable (ping + SSH)
 - [x] SSH key login, password login disabled
-- [ ] Ansible inventory
+- [x] Ansible inventory, run from `obs` as the management host ([evidence](images/ansible-ping.png))
 - [ ] k3s installed, `kubectl get nodes` shows 3 nodes `Ready`
 
 ## Decisions
@@ -49,6 +49,15 @@ sudo sed -i '/match:/d;/macaddress:/d;/set-name:/d' /etc/netplan/00-installer-co
 ![Password attempt denied with "Permission denied (publickey)", key login prints the hostname](images/ssh-password-denied.png)
 
 Gotcha: Ubuntu's installer writes `/etc/ssh/sshd_config.d/50-cloud-init.conf` with `PasswordAuthentication yes`. sshd keeps the **first** value it reads, in alphabetical file order, so the hardening file is named `10-` to win. Putting `no` in a later file would leave passwords silently enabled.
+
+## Ansible: one place to manage the lab
+- Ansible runs on **obs**, the management host. Windows can't run Ansible, and this keeps the Windows host unchanged.
+- **Agent forwarding** to obs only: obs signs logins to the other nodes using the key held by my PC's ssh-agent, so the private key is never copied to obs. Trade-off: while I'm connected, root on obs could use the forwarded agent, so forwarding is enabled for that one host and nowhere else.
+- obs learned the nodes' host keys with `ssh-keyscan`, then I **compared the fingerprints** with the ones my PC saw on first connection before trusting them (trust-on-first-use, checked).
+- `host_key_checking = True` in [ansible.cfg](../ansible/ansible.cfg): Ansible refuses a node whose identity changes.
+- Workflow: edit on the PC → `git push` → `git pull` on obs → run. obs never holds GitHub credentials.
+
+![ansible all -m ping: all four hosts reply pong](images/ansible-ping.png)
 
 ## Problems and fixes
 | Problem | Cause | Fix |
